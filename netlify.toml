@@ -1,16 +1,14 @@
 [build]
-  publish = "public"
-  command = "npm install"
+publish = "public"
+command = "npm install --include=optional"
 
 [functions]
-  directory = "netlify/functions"
-  included_files = ["views/**", "db/schema.sql"]
-  node_bundler = "esbuild"
-external_node_modules = ["@libsql/client", "ejs"]
+directory = "netlify/functions"
+included_files = ["views/**", "db/schema.sql"]
+node_bundler = "esbuild"
+external_node_modules = ["@libsql/client", "libsql", "ejs"]
 
-# Anything not matched by a static file in /public falls through to the
-# Express app running as a single serverless function.
 [[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
+from = "/*"
+to = "/.netlify/functions/api/:splat"
+status = 200
