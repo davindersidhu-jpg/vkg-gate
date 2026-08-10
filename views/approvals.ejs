@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'approvals' }) %>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Approvals</h1>
+          <div class="page-sub">
+            <% if (currentUser.role === 'owner') { %>
+              Visitors waiting for your approval before they're let in
+            <% } else { %>
+              Visitor approvals across all flats
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="pill-nav">
+        <a href="/approvals?status=pending" class="<%= filterStatus === 'pending' ? 'active' : '' %>">Pending</a>
+        <a href="/approvals?status=approved" class="<%= filterStatus === 'approved' ? 'active' : '' %>">Approved</a>
+        <a href="/approvals?status=rejected" class="<%= filterStatus === 'rejected' ? 'active' : '' %>">Rejected</a>
+        <a href="/approvals?status=all" class="<%= filterStatus === 'all' ? 'active' : '' %>">All</a>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Visitor</th><th>Category</th><th>Flat</th><th>Purpose</th>
+                <th>Arrived</th><th>Status</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (entries.length === 0) { %>
+                <tr class="empty-row"><td colspan="7">Nothing here right now.</td></tr>
+              <% } %>
+              <% entries.forEach(function(e) { %>
+                <tr>
+                  <td><strong><%= e.person_name %></strong><% if (e.phone) { %><div class="hint"><%= e.phone %></div><% } %></td>
+                  <td><%= e.category %></td>
+                  <td>
+                    <%= e.site_name %><br>
+                    <span class="hint"><%= e.wing_name %> - <%= e.flat_number %></span>
+                  </td>
+                  <td><%= e.purpose || '—' %></td>
+                  <td><%= new Date(e.in_time + 'Z').toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+                  <td>
+                    <span class="badge badge-<%= e.approval_status %>"><%= e.approval_status %></span>
+                    <% if (e.approval_status !== 'pending') { %>
+                      <div class="hint">Physical status: <%= e.status %></div>
+                    <% } %>
+                  </td>
+                  <td style="white-space:nowrap;">
+                    <% if (e.approval_status === 'pending') { %>
+                      <form method="POST" action="/approvals/<%= e.id %>/approve" style="display:inline;">
+                        <button class="btn btn-primary btn-sm" type="submit">Approve</button>
+                      </form>
+                      <form method="POST" action="/approvals/<%= e.id %>/reject" style="display:inline;">
+                        <button class="btn btn-outline btn-sm" type="submit">Reject</button>
+                      </form>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

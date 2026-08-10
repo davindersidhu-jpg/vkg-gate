@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'entries' }) %>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Entry / Exit Log</h1>
+          <div class="page-sub">Digital check-in &amp; check-out for staff, visitors and vehicles</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal()">+ New Entry</button>
+      </div>
+
+      <form method="GET" class="filter-bar card" style="padding:16px 18px;">
+        <% if (currentUser.role === 'admin') { %>
+        <div class="filter-field">
+          <label>Site</label>
+          <select name="site_id">
+            <option value="">All Sites</option>
+            <% sites.forEach(function(s) { %>
+              <option value="<%= s.id %>" <%= String(selectedSiteId) === String(s.id) ? 'selected' : '' %>><%= s.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <% } %>
+        <div class="filter-field">
+          <label>Type</label>
+          <select name="entry_type">
+            <option value="">All</option>
+            <option value="staff" <%= filters.entry_type === 'staff' ? 'selected' : '' %>>Staff</option>
+            <option value="visitor" <%= filters.entry_type === 'visitor' ? 'selected' : '' %>>Visitor</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label>Status</label>
+          <select name="status">
+            <option value="">All</option>
+            <option value="Inside" <%= filters.status === 'Inside' ? 'selected' : '' %>>Inside</option>
+            <option value="Checked-out" <%= filters.status === 'Checked-out' ? 'selected' : '' %>>Checked-out</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label>From</label>
+          <input type="date" name="from" value="<%= filters.from %>">
+        </div>
+        <div class="filter-field">
+          <label>To</label>
+          <input type="date" name="to" value="<%= filters.to %>">
+        </div>
+        <div class="filter-field" style="flex:2; min-width:200px;">
+          <label>Search name / vehicle no. / department</label>
+          <input type="text" name="q" value="<%= filters.q %>" placeholder="e.g. Ramesh Kumar or MH02AB1234">
+        </div>
+        <button class="btn btn-navy" type="submit">Filter</button>
+        <a class="btn btn-outline" href="/entries">Reset</a>
+      </form>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Type</th><th>Category</th><th>Site</th>
+                <th>Host / Flat</th><th>Vehicle</th><th>In Time</th><th>Out Time</th>
+                <th>Approval</th><th>Status</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (entries.length === 0) { %>
+                <tr class="empty-row"><td colspan="11">No entries match these filters.</td></tr>
+              <% } %>
+              <% entries.forEach(function(e) { %>
+                <tr>
+                  <td><strong><%= e.person_name %></strong><% if (e.phone) { %><div class="hint"><%= e.phone %></div><% } %></td>
+                  <td><span class="badge <%= e.entry_type === 'staff' ? 'badge-staff' : 'badge-visitor' %>"><%= e.entry_type %></span></td>
+                  <td><%= e.category %></td>
+                  <td><%= e.site_name %></td>
+                  <td>
+                    <% if (e.flat_number) { %>
+                      <%= e.wing_name %> - <%= e.flat_number %>
+                    <% } else { %>
+                      <%= e.host_department || '—' %>
+                    <% } %>
+                  </td>
+                  <td><%= e.vehicle_number ? e.vehicle_number + ' (' + e.vehicle_type + ')' : '—' %></td>
+                  <td><%= new Date(e.in_time + 'Z').toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+                  <td><%= e.out_time ? new Date(e.out_time + 'Z').toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—' %></td>
+                  <td>
+                    <% if (e.approval_status) { %>
+                      <span class="badge badge-<%= e.approval_status %>"><%= e.approval_status %></span>
+                    <% } else { %>
+                      <span class="hint">—</span>
+                    <% } %>
+                  </td>
+                  <td><span class="badge <%= e.status === 'Inside' ? 'badge-inside' : 'badge-out' %>"><%= e.status %></span></td>
+                  <td>
+                    <% if (e.status === 'Inside') { %>
+                      <form method="POST" action="/entries/<%= e.id %>/checkout">
+                        <button class="btn btn-outline btn-sm" type="submit">Check-out</button>
+                      </form>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New Entry Modal -->
+  <div class="modal-backdrop" id="entryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">New Entry</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <form method="POST" action="/entries">
+        <div class="toggle-group">
+          <div class="toggle-option active" data-type="staff" onclick="selectType('staff')">Staff / Service</div>
+          <div class="toggle-option" data-type="visitor" onclick="selectType('visitor')">Visitor</div>
+        </div>
+        <input type="hidden" name="entry_type" id="entry_type" value="staff">
+
+        <% if (currentUser.role === 'admin') { %>
+        <div class="field">
+          <label>Site</label>
+          <select name="site_id" required>
+            <% sites.forEach(function(s) { %>
+              <option value="<%= s.id %>"><%= s.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <% } %>
+
+        <div class="field">
+          <label>Category</label>
+          <select name="category" id="category" required></select>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" name="person_name" required>
+          </div>
+          <div class="field">
+            <label>Phone (optional)</label>
+            <input type="tel" name="phone">
+          </div>
+        </div>
+
+        <!-- Visitor-only: link to a specific flat so its owner can approve -->
+        <div class="field" id="flatPickerField" style="display:none;">
+          <label style="display:flex; align-items:center; justify-content:space-between;">
+            <span>Going to a specific flat? (optional)</span>
+          </label>
+          <div class="field-row">
+            <select id="wingSelect" onchange="populateFlats()">
+              <option value="">Select wing…</option>
+            </select>
+            <select id="flatSelect" name="flat_id">
+              <option value="">Select flat…</option>
+            </select>
+          </div>
+          <div class="hint" id="flatOwnerHint"></div>
+        </div>
+
+        <div class="field">
+          <label id="hostLabel">Department</label>
+          <input type="text" name="host_department" id="host_department" placeholder="e.g. Security">
+        </div>
+
+        <div class="field">
+          <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+            <input type="checkbox" name="has_vehicle" id="has_vehicle" style="width:auto;" onchange="toggleVehicle()">
+            Arrived with a vehicle
+          </label>
+        </div>
+
+        <div class="field-row" id="vehicleFields" style="display:none;">
+          <div class="field">
+            <label>Vehicle Number</label>
+            <input type="text" name="vehicle_number" placeholder="MH 02 AB 1234">
+          </div>
+          <div class="field">
+            <label>Vehicle Type</label>
+            <select name="vehicle_type">
+              <option value="2W">2 Wheeler</option>
+              <option value="4W">4 Wheeler</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Purpose (optional)</label>
+          <input type="text" name="purpose" placeholder="e.g. Site inspection, Delivery for A-1203">
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" style="flex:1; justify-content:center;">Check In</button>
+          <button class="btn btn-outline" type="button" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const STAFF_CATEGORIES = <%- JSON.stringify(STAFF_CATEGORIES) %>;
+    const VISITOR_CATEGORIES = <%- JSON.stringify(VISITOR_CATEGORIES) %>;
+    const FLAT_ROWS = <%- JSON.stringify(flatPickerRows) %>; // [{wing_id, wing_name, site_id, flat_id, flat_number, owner_name}, ...]
+
+    function populateCategories(type) {
+      const select = document.getElementById('category');
+      const list = type === 'staff' ? STAFF_CATEGORIES : VISITOR_CATEGORIES;
+      select.innerHTML = list.map(c => `<option value="${c}">${c}</option>`).join('');
+      document.getElementById('hostLabel').textContent = type === 'staff' ? 'Department' : 'Host Name (optional note)';
+      document.getElementById('host_department').placeholder = type === 'staff' ? 'e.g. Security' : 'e.g. Mr. Sharma';
+      document.getElementById('flatPickerField').style.display = type === 'visitor' ? 'block' : 'none';
+    }
+
+    function populateWings() {
+      const wingSelect = document.getElementById('wingSelect');
+      const seen = new Set();
+      let opts = '<option value="">Select wing…</option>';
+      FLAT_ROWS.forEach(r => {
+        if (!seen.has(r.wing_id)) {
+          seen.add(r.wing_id);
+          opts += `<option value="${r.wing_id}">${r.wing_name}</option>`;
+        }
+      });
+      wingSelect.innerHTML = opts;
+    }
+
+    function populateFlats() {
+      const wingId = document.getElementById('wingSelect').value;
+      const flatSelect = document.getElementById('flatSelect');
+      const hint = document.getElementById('flatOwnerHint');
+      if (!wingId) {
+        flatSelect.innerHTML = '<option value="">Select flat…</option>';
+        hint.textContent = '';
+        return;
+      }
+      const rows = FLAT_ROWS.filter(r => String(r.wing_id) === String(wingId));
+      flatSelect.innerHTML = '<option value="">Select flat…</option>' +
+        rows.map(r => `<option value="${r.flat_id}" data-owner="${r.owner_name || ''}">${r.flat_number}</option>`).join('');
+      hint.textContent = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('flatSelect').addEventListener('change', (e) => {
+        const opt = e.target.selectedOptions[0];
+        const owner = opt ? opt.dataset.owner : '';
+        document.getElementById('flatOwnerHint').textContent = owner
+          ? `Owner: ${owner} — this visitor will need their approval.`
+          : 'No owner login on file for this flat yet — entry will not require approval.';
+      });
+    });
+
+    function selectType(type) {
+      document.getElementById('entry_type').value = type;
+      document.querySelectorAll('.toggle-option').forEach(el => {
+        el.classList.toggle('active', el.dataset.type === type);
+      });
+      populateCategories(type);
+    }
+
+    function toggleVehicle() {
+      const checked = document.getElementById('has_vehicle').checked;
+      document.getElementById('vehicleFields').style.display = checked ? 'grid' : 'none';
+    }
+
+    function openModal() {
+      document.getElementById('entryModal').classList.add('open');
+    }
+    function closeModal() {
+      document.getElementById('entryModal').classList.remove('open');
+    }
+
+    populateWings();
+    populateCategories('staff');
+  </script>
+</body>
+</html>

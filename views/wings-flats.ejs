@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'wings-flats' }) %>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Wings &amp; Flats</h1>
+          <div class="page-sub">Manage building structure and flat owner logins</div>
+        </div>
+      </div>
+
+      <% if (error) { %><div class="error-text"><%= error %></div><% } %>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Flats</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Site</th><th>Wing</th><th>Flat</th><th>Owner Name</th><th>Owner Phone</th><th>Login</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% if (flats.length === 0) { %>
+                <tr class="empty-row"><td colspan="7">No flats yet — add a wing below, then add flats to it.</td></tr>
+              <% } %>
+              <% flats.forEach(function(f) { %>
+                <tr>
+                  <td><%= f.site_name %></td>
+                  <td><%= f.wing_name %></td>
+                  <td><strong><%= f.flat_number %></strong></td>
+                  <td><%= f.owner_name || '—' %></td>
+                  <td><%= f.owner_phone || '—' %></td>
+                  <td>
+                    <% if (f.owner_user_id) { %>
+                      <span class="badge badge-approved">@<%= f.owner_username %></span>
+                    <% } else { %>
+                      <span class="badge badge-out">No login</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (!f.owner_user_id) { %>
+                      <button class="btn btn-outline btn-sm" type="button" onclick="openLoginModal(<%= f.id %>, '<%= (f.owner_name || '').replace(/'/g, "\\'") %>')">Create Login</button>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:480px;">
+        <div class="card-header"><h2 class="card-title">Add Flat</h2></div>
+        <form method="POST" action="/wings-flats/flats">
+          <div class="field">
+            <label>Wing</label>
+            <select name="wing_id" required>
+              <% wings.forEach(function(w) { %>
+                <option value="<%= w.id %>"><%= w.site_name %> — <%= w.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label>Flat Number</label>
+            <input type="text" name="flat_number" placeholder="e.g. A-1203" required>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Owner Name (optional)</label>
+              <input type="text" name="owner_name" placeholder="e.g. Mr. Sharma">
+            </div>
+            <div class="field">
+              <label>Owner Phone (optional)</label>
+              <input type="text" name="owner_phone" placeholder="e.g. 9876543210">
+            </div>
+          </div>
+          <button class="btn btn-primary" type="submit">Add Flat</button>
+        </form>
+      </div>
+
+      <div class="card" style="max-width:480px;">
+        <div class="card-header"><h2 class="card-title">Add Wing</h2></div>
+        <form method="POST" action="/wings-flats/wings">
+          <div class="field">
+            <label>Site</label>
+            <select name="site_id" required>
+              <% sites.forEach(function(s) { %>
+                <option value="<%= s.id %>"><%= s.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label>Wing Name</label>
+            <input type="text" name="name" placeholder="e.g. Wing A" required>
+          </div>
+          <button class="btn btn-navy" type="submit">Add Wing</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Wings</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Site</th><th>Wing</th><th></th></tr></thead>
+            <tbody>
+              <% wings.forEach(function(w) { %>
+                <tr>
+                  <td><%= w.site_name %></td>
+                  <td><%= w.name %></td>
+                  <td>
+                    <form method="POST" action="/wings-flats/wings/<%= w.id %>/toggle-active">
+                      <button class="btn btn-outline btn-sm" type="submit">Deactivate</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="loginModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Create Owner Login</h3>
+        <button class="modal-close" onclick="closeLoginModal()">&times;</button>
+      </div>
+      <form method="POST" id="loginForm" action="">
+        <div class="field">
+          <label>Username</label>
+          <input type="text" name="username" id="loginUsername" required>
+        </div>
+        <div class="field">
+          <label>Temporary Password</label>
+          <input type="password" name="password" required minlength="6">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" style="flex:1; justify-content:center;">Create Login</button>
+          <button class="btn btn-outline" type="button" onclick="closeLoginModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openLoginModal(flatId, ownerName) {
+      document.getElementById('loginForm').action = '/wings-flats/flats/' + flatId + '/create-login';
+      const suggested = (ownerName || 'owner').toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '');
+      document.getElementById('loginUsername').value = suggested || ('flat' + flatId);
+      document.getElementById('loginModal').classList.add('open');
+    }
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.remove('open');
+    }
+  </script>
+</body>
+</html>

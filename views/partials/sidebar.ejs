@@ -1,0 +1,54 @@
+<input type="checkbox" id="navToggle" class="nav-toggle">
+
+<div class="mobile-topbar">
+  <label for="navToggle" class="hamburger-btn" aria-label="Open menu">&#9776;</label>
+  <div class="mobile-topbar-brand">VKG<span>.</span></div>
+</div>
+
+<label for="navToggle" class="nav-backdrop" aria-label="Close menu"></label>
+
+<aside class="sidebar">
+  <div>
+    <div class="sidebar-brand">VKG<span>.</span></div>
+    <div class="sidebar-tag">Gate Management</div>
+  </div>
+  <nav class="nav-group">
+    <% if (currentUser && currentUser.role !== 'owner') { %>
+      <a class="nav-link <%= active === 'dashboard' ? 'active' : '' %>" href="/">
+        <span class="nav-icon">&#9635;</span> Dashboard
+      </a>
+      <a class="nav-link <%= active === 'entries' ? 'active' : '' %>" href="/entries">
+        <span class="nav-icon">&#128274;</span> Entry / Exit Log
+      </a>
+      <a class="nav-link <%= active === 'reports' ? 'active' : '' %>" href="/reports">
+        <span class="nav-icon">&#128202;</span> Reports
+      </a>
+    <% } %>
+    <% if (currentUser && (currentUser.role === 'owner' || currentUser.role === 'admin')) { %>
+      <a class="nav-link <%= active === 'approvals' ? 'active' : '' %>" href="/approvals">
+        <span class="nav-icon">&#9989;</span> Approvals
+      </a>
+    <% } %>
+    <% if (currentUser && currentUser.role === 'admin') { %>
+      <a class="nav-link <%= active === 'wings-flats' ? 'active' : '' %>" href="/wings-flats">
+        <span class="nav-icon">&#127968;</span> Wings &amp; Flats
+      </a>
+      <a class="nav-link <%= active === 'users' ? 'active' : '' %>" href="/users">
+        <span class="nav-icon">&#128100;</span> Users
+      </a>
+      <a class="nav-link <%= active === 'sites' ? 'active' : '' %>" href="/sites">
+        <span class="nav-icon">&#127970;</span> Sites
+      </a>
+    <% } %>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      Signed in as
+      <strong><%= currentUser.full_name %></strong>
+      <%= { admin: 'Administrator', guard: 'Security Guard', owner: 'Flat Owner' }[currentUser.role] %>
+    </div>
+    <form action="/logout" method="POST">
+      <button class="logout-btn" type="submit">Log out</button>
+    </form>
+  </div>
+</aside>

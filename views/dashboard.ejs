@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'dashboard' }) %>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <div class="page-sub">Live overview of gate activity today</div>
+        </div>
+        <% if (currentUser.role === 'admin') { %>
+          <form method="GET" style="display:flex; gap:8px;">
+            <select name="site_id" onchange="this.form.submit()" class="site-filter-select">
+              <option value="">All Sites</option>
+              <% sites.forEach(function(s) { %>
+                <option value="<%= s.id %>" <%= selectedSiteId == s.id ? 'selected' : '' %>><%= s.name %></option>
+              <% }) %>
+            </select>
+          </form>
+        <% } %>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--navy-100); color:var(--navy-800);">&#128101;</div>
+          <div class="stat-value"><%= stats.todayCount %></div>
+          <div class="stat-label">Total Entries Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--green-100); color:var(--green-600);">&#9989;</div>
+          <div class="stat-value"><%= stats.staffCheckedIn %></div>
+          <div class="stat-label">Staff Checked-In Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--amber-100); color:var(--amber-600);">&#128663;</div>
+          <div class="stat-value"><%= stats.vehiclesToday %></div>
+          <div class="stat-label">Vehicles Entered Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--red-100); color:var(--red-600);">&#128100;</div>
+          <div class="stat-value"><%= stats.currentlyInside %></div>
+          <div class="stat-label">Currently Inside</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--amber-100); color:var(--amber-600);">&#9203;</div>
+          <div class="stat-value"><%= stats.pendingApprovals %></div>
+          <div class="stat-label">Pending Owner Approvals</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Recent Entries</h2>
+          <a href="/entries" class="btn btn-outline btn-sm">View All &rarr;</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Type</th><th>Category</th><th>Site</th>
+                <th>Flat</th><th>Vehicle</th><th>In Time</th><th>Approval</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (recentEntries.length === 0) { %>
+                <tr class="empty-row"><td colspan="9">No entries logged yet. Start by adding one from the Entry / Exit Log.</td></tr>
+              <% } %>
+              <% recentEntries.forEach(function(e) { %>
+                <tr>
+                  <td><strong><%= e.person_name %></strong></td>
+                  <td><span class="badge <%= e.entry_type === 'staff' ? 'badge-staff' : 'badge-visitor' %>"><%= e.entry_type %></span></td>
+                  <td><%= e.category %></td>
+                  <td><%= e.site_name %></td>
+                  <td><%= e.flat_number ? (e.wing_name + ' - ' + e.flat_number) : '—' %></td>
+                  <td><%= e.vehicle_number || '—' %></td>
+                  <td><%= new Date(e.in_time + 'Z').toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+                  <td>
+                    <% if (e.approval_status) { %>
+                      <span class="badge badge-<%= e.approval_status %>"><%= e.approval_status %></span>
+                    <% } else { %>
+                      <span class="hint">—</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <span class="badge <%= e.status === 'Inside' ? 'badge-inside' : 'badge-out' %>"><%= e.status %></span>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

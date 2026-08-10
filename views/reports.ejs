@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'reports' }) %>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Reports</h1>
+          <div class="page-sub">Filter and export gate activity history</div>
+        </div>
+      </div>
+
+      <form method="GET" class="filter-bar card" style="padding:16px 18px;">
+        <% if (currentUser.role === 'admin') { %>
+        <div class="filter-field">
+          <label>Site</label>
+          <select name="site_id">
+            <option value="">All Sites</option>
+            <% sites.forEach(function(s) { %>
+              <option value="<%= s.id %>" <%= String(filters.site_id) === String(s.id) ? 'selected' : '' %>><%= s.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <% } %>
+        <div class="filter-field">
+          <label>Type</label>
+          <select name="entry_type">
+            <option value="">All</option>
+            <option value="staff" <%= filters.entry_type === 'staff' ? 'selected' : '' %>>Staff</option>
+            <option value="visitor" <%= filters.entry_type === 'visitor' ? 'selected' : '' %>>Visitor</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label>From</label>
+          <input type="date" name="from" value="<%= filters.from %>">
+        </div>
+        <div class="filter-field">
+          <label>To</label>
+          <input type="date" name="to" value="<%= filters.to %>">
+        </div>
+        <button class="btn btn-navy" type="submit">Filter</button>
+        <a class="btn btn-primary" href="/reports/export.csv?<%= new URLSearchParams(Object.entries(filters).filter(([k,v]) => v)).toString() %>">Export CSV</a>
+      </form>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><%= rows.length %> record<%= rows.length === 1 ? '' : 's' %></h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Type</th><th>Category</th><th>Site</th>
+                <th>Flat</th><th>Vehicle</th><th>In Time</th><th>Out Time</th><th>Approval</th><th>Status</th><th>Logged By</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (rows.length === 0) { %>
+                <tr class="empty-row"><td colspan="11">No records for this filter.</td></tr>
+              <% } %>
+              <% rows.forEach(function(e) { %>
+                <tr>
+                  <td><strong><%= e.person_name %></strong></td>
+                  <td><span class="badge <%= e.entry_type === 'staff' ? 'badge-staff' : 'badge-visitor' %>"><%= e.entry_type %></span></td>
+                  <td><%= e.category %></td>
+                  <td><%= e.site_name %></td>
+                  <td><%= e.flat_number ? (e.wing_name + ' - ' + e.flat_number) : '—' %></td>
+                  <td><%= e.vehicle_number || '—' %></td>
+                  <td><%= new Date(e.in_time + 'Z').toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+                  <td><%= e.out_time ? new Date(e.out_time + 'Z').toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—' %></td>
+                  <td>
+                    <% if (e.approval_status) { %>
+                      <span class="badge badge-<%= e.approval_status %>"><%= e.approval_status %></span>
+                    <% } else { %>
+                      <span class="hint">—</span>
+                    <% } %>
+                  </td>
+                  <td><span class="badge <%= e.status === 'Inside' ? 'badge-inside' : 'badge-out' %>"><%= e.status %></span></td>
+                  <td><%= e.logged_by || '—' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

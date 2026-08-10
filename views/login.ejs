@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-logo">VKG<span>.</span></div>
+      <div class="auth-sub">GATE MANAGEMENT &middot; Internal Application</div>
+      <h1 class="auth-title">Sign in to continue</h1>
+
+      <% if (error) { %>
+        <div class="error-text"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/login">
+        <input type="hidden" name="next" value="<%= next %>">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-primary" type="submit" style="width:100%; justify-content:center; padding:11px;">Sign in</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

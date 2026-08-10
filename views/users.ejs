@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'users' }) %>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Users</h1>
+          <div class="page-sub">Manage who can log in and their access level</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal()">+ Add User</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Username</th><th>Role</th><th>Site</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% users.forEach(function(u) { %>
+                <tr>
+                  <td><strong><%= u.full_name %></strong></td>
+                  <td><%= u.username %></td>
+                  <td><span class="badge <%= u.role === 'admin' ? 'badge-staff' : 'badge-visitor' %>"><%= u.role %></span></td>
+                  <td><%= u.site_name || '—' %></td>
+                  <td><span class="badge <%= u.active ? 'badge-inside' : 'badge-out' %>"><%= u.active ? 'Active' : 'Inactive' %></span></td>
+                  <td style="white-space:nowrap;">
+                    <form method="POST" action="/users/<%= u.id %>/toggle-active" style="display:inline;">
+                      <button class="btn btn-outline btn-sm" type="submit" <%= u.id === currentUser.id ? 'disabled' : '' %>>
+                        <%= u.active ? 'Deactivate' : 'Activate' %>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="userModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Add User</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <% if (error) { %><div class="error-text"><%= error %></div><% } %>
+      <form method="POST" action="/users">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" name="full_name" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Username</label>
+            <input type="text" name="username" required>
+          </div>
+          <div class="field">
+            <label>Temporary Password</label>
+            <input type="password" name="password" required minlength="6">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Role</label>
+            <select name="role" required>
+              <option value="guard">Security Guard</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Site</label>
+            <select name="site_id">
+              <% sites.forEach(function(s) { %>
+                <option value="<%= s.id %>"><%= s.name %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" style="flex:1; justify-content:center;">Create User</button>
+          <button class="btn btn-outline" type="button" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openModal() { document.getElementById('userModal').classList.add('open'); }
+    function closeModal() { document.getElementById('userModal').classList.remove('open'); }
+    <% if (error) { %> openModal(); <% } %>
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'sites' }) %>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Sites</h1>
+          <div class="page-sub">VKG properties covered by this application</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">All Sites</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Location</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <% sites.forEach(function(s) { %>
+                <tr>
+                  <td><strong><%= s.name %></strong></td>
+                  <td><%= s.location || '—' %></td>
+                  <td><span class="badge <%= s.active ? 'badge-inside' : 'badge-out' %>"><%= s.active ? 'Active' : 'Inactive' %></span></td>
+                  <td>
+                    <form method="POST" action="/sites/<%= s.id %>/toggle-active">
+                      <button class="btn btn-outline btn-sm" type="submit"><%= s.active ? 'Deactivate' : 'Activate' %></button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:420px;">
+        <div class="card-header"><h2 class="card-title">Add Site</h2></div>
+        <% if (error) { %><div class="error-text"><%= error %></div><% } %>
+        <form method="POST" action="/sites">
+          <div class="field">
+            <label>Site Name</label>
+            <input type="text" name="name" required>
+          </div>
+          <div class="field">
+            <label>Location</label>
+            <input type="text" name="location" placeholder="e.g. Andheri, Mumbai">
+          </div>
+          <button class="btn btn-primary" type="submit">Add Site</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
