@@ -6,6 +6,7 @@
   directory = "netlify/functions"
   included_files = ["views/**", "db/schema.sql"]
   node_bundler = "esbuild"
+  external_node_modules = ["@libsql/client"]
 
 # Anything not matched by a static file in /public falls through to the
 # Express app running as a single serverless function.
