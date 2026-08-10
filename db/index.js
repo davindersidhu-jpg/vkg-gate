@@ -8,10 +8,22 @@ const { createClient } = require('@libsql/client');
 // For local testing without a Turso account yet, you can instead leave these
 // unset and it will fall back to a local file next to this module.
 const localDbPath = path.join(__dirname, 'vkg_gate.local.db');
-const url = process.env.TURSO_DATABASE_URL || `file:${localDbPath}`;
-const authToken = process.env.TURSO_AUTH_TOKEN; // not needed for local file mode
 
-const client = createClient(authToken ? { url, authToken } : { url });
+const isNetlify = process.env.NETLIFY === 'true';
+
+const url = isNetlify
+  ? process.env.TURSO_DATABASE_URL
+  : (process.env.TURSO_DATABASE_URL || `file:${localDbPath}`);
+
+const authToken = process.env.TURSO_AUTH_TOKEN;
+
+if (isNetlify && !url) {
+  throw new Error('TURSO_DATABASE_URL is not configured in Netlify.');
+}
+
+const client = createClient(
+  authToken ? { url, authToken } : { url }
+);
 
 let schemaReady = null;
 
