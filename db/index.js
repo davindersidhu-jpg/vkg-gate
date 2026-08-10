@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const path = require('path');
 const fs = require('fs');
-const { createClient } = require('@libsql/client');
+const { createClient } = require('@libsql/client/web');
 
 // TURSO_DATABASE_URL / TURSO_AUTH_TOKEN point at your hosted Turso database.
 // For local testing without a Turso account yet, you can instead leave these
@@ -29,8 +29,10 @@ let schemaReady = null;
 
 function ensureSchema() {
   if (!schemaReady) {
-    const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
-    schemaReady = client.executeMultiple(schema);
+const schema = fs.readFileSync(
+  path.join(process.cwd(), 'db', 'schema.sql'),
+  'utf8'
+);    schemaReady = client.executeMultiple(schema);
   }
   return schemaReady;
 }
