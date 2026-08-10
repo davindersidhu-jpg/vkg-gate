@@ -20,11 +20,7 @@ const app = express();
 
 app.set('view engine', 'ejs');
 
-const viewsPath = process.env.NETLIFY
-  ? path.join(process.cwd(), 'views')
-  : path.join(__dirname, 'views');
-
-app.set('views', viewsPath);
+app.set('views', path.join(__dirname, '../../views'));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
